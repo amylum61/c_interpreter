@@ -55,8 +55,6 @@ void program()
     }
 }
 
-#undef int
-
 int eval()
 {
     int op, *tmp;
@@ -139,9 +137,11 @@ int eval()
     return 0;
 }
 
-int main(int argc,char **argv)
+#undef int
+
+int main(int argc,char *argv[])
 {
-#define int long long
+    #define int long long
 
     int i,fd;
 
