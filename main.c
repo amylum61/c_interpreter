@@ -2,6 +2,9 @@
 #include<memory.h>
 #include<stdlib.h>
 #include<string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #define int long long
 /*
  next()词法分析，获取下一个标记，它将自动忽略空白字符
@@ -27,6 +30,15 @@ enum{
 PUSH,OR,XOR,AND,EQ,NE,LT,GT,LE,GE,SHL,SHR,ADD,\
 SUB,MUL,DIV,MOD,OPEN,READ,CLOS,PRTF,MALC,MSET,MCMP,EXIT
 };//指令集 枚举类型
+
+enum{
+    Num = 128, Fun, Sys, Glo, Loc, Id,
+    Char, Else, Enum, If, Int, Return, Sizeof, While,
+    Assign, Cond, Lor, Lan, Or, Xor, And, Eq, Ne, Lt,
+    Gt, Le, Ge, Shl, Shr, Add, Sub, Mul, Div, Mod, Inc,
+    Dec, Brak
+};//支持的标记符
+
 /*
 IMM <num> 将 <num> 放入寄存器 ax 中。
 LC 将对应地址中的字符载入 ax 中，要求 ax 中存放地址。
@@ -34,9 +46,62 @@ LI 将对应地址中的整数载入 ax 中，要求 ax 中存放地址。
 SC 将 ax 中的数据作为字符存放入地址中，要求栈顶存放地址。
 SI 将 ax 中的数据作为整数存放入地址中，要求栈顶存放地址。
 */
+struct identifier
+{
+    int token;//该标识符返回的标记
+    int hash;//字符串哈希值
+    char *name;//标识符本身字符串
+    int class;//标识符的类别（数字 全局/局部变量）
+    int type;//标识符类型char int等
+    int value;//标识符的值  函数地址  变量值
+    int Bclass;//全局标识符信息
+    int Btype;
+    int Bvalue;
+};
+
+int tokenVal;//标记流的值
+int *currentId,//流ID
+    *symbols;// 符号表
+
+enum {Token, Hash, Name, Type, Class, Value, BType, BClass, BValue, IdSize};
+
 void next()
 {
-    token = *src++;
+    char *lastPos;
+    int hash;
+
+    while(token = *src)
+    {
+        src++;
+        //此处解析token
+        if(token == '\n')
+        {
+            line++;
+        }
+        else if(token == '#')
+        {
+            //跳过宏定义 不支持宏定义
+            while(*src != 0 && *src != '\n')
+            {
+                src++;
+            }
+        }
+        else if((token >= 'a' && token <= 'z') || (token >='A' && token <= 'Z') || (token == '_'))
+        {
+            //解析标识符
+            lastPos = src - 1;
+            hash = token;
+
+            while((token >= 'a' && token <= 'z') || (token >='A' && token <= 'Z') || (token == '_'))
+            {
+                hash = hash * 147 + *src;
+                src++;
+            }
+
+            //搜寻现有标识符 线性搜索
+            currentId = symbols;
+        }
+    }
     return;
 }
 
@@ -196,6 +261,17 @@ int main(int argc,char *argv[])
 
     bp = sp = (int *)((int)stack + poolSize);//初始化bp和sp为
     ax = 0;
+
+    i = 0;
+    text[i++] = IMM;
+    text[i++] = 10;
+    text[i++] = PUSH;
+    text[i++] = IMM;
+    text[i++] = 20;
+    text[i++] = ADD;
+    text[i++] = PUSH;
+    text[i++] = EXIT;
+    pc = text;
 
     program();
 
