@@ -92,7 +92,7 @@ void next()
             lastPos = src - 1;
             hash = token;
 
-            while((token >= 'a' && token <= 'z') || (token >='A' && token <= 'Z') || (token == '_'))
+            while((*src >= 'a' && *src <= 'z') || (*src >='A' && *src <= 'Z') || (*src >='0' && *src <= '9') || (*src == '_'))
             {
                 hash = hash * 147 + *src;
                 src++;
